@@ -1,0 +1,47 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "drizzle-orm",
+  "type": "registry:lib",
+  "title": "Drizzle ORM",
+  "description": "Pieter Berkel's opinionated Drizzle ORM setup for MySQL.",
+  "dependencies": [
+    "drizzle-orm",
+    "mysql2"
+  ],
+  "devDependencies": [
+    "drizzle-kit",
+    "dotenv"
+  ],
+  "registryDependencies": [
+    "http://localhost:4321/r/id-generator.json"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/drizzle-orm/drizzle.config.ts",
+      "content": "import \"dotenv/config\";\nimport { defineConfig } from \"drizzle-kit\";\n\nexport default defineConfig({\n  out: \"./drizzle\",\n  schema: \"./lib/db/schema\",\n  dialect: \"mysql\",\n  dbCredentials: {\n    url: process.env.DATABASE_URL!,\n  },\n});\n",
+      "type": "registry:file",
+      "target": "~/drizzle.config.ts"
+    },
+    {
+      "path": "registry/new-york/drizzle-orm/lib/db/schema/example-items.ts",
+      "content": "import { boolean, mysqlTable as table, varchar } from \"drizzle-orm/mysql-core\";\n\nimport { id, timestamps } from \"../helpers\";\n\nexport const todoItems = table(\"example_items\", {\n  id,\n  title: varchar(\"title\", { length: 255 }).notNull(),\n  isCompleted: boolean(\"is_completed\").notNull().default(false),\n  ...timestamps,\n});\n",
+      "type": "registry:lib"
+    },
+    {
+      "path": "registry/new-york/drizzle-orm/lib/db/schema/index.ts",
+      "content": "export * from \"./example-items\";\n",
+      "type": "registry:lib"
+    },
+    {
+      "path": "registry/new-york/drizzle-orm/lib/db/helpers.ts",
+      "content": "import { generateID } from \"@/lib/id-generator\";\nimport { timestamp, varchar } from \"drizzle-orm/mysql-core\";\n\nexport const id = varchar(\"id\", { length: 16 })\n  .primaryKey()\n  .$defaultFn(() => generateID());\n\nexport const createdAt = timestamp(\"created_at\").notNull().defaultNow();\n\nexport const updatedAt = timestamp(\"updated_at\")\n  .notNull()\n  .defaultNow()\n  .onUpdateNow();\n\nexport const deletedAt = timestamp(\"deleted_at\");\n\nexport const timestamps = {\n  createdAt,\n  updatedAt,\n  deletedAt,\n};\n",
+      "type": "registry:lib"
+    },
+    {
+      "path": "registry/new-york/drizzle-orm/lib/db/index.ts",
+      "content": "import { drizzle, MySql2Database } from \"drizzle-orm/mysql2\";\nimport mysql, { Connection } from \"mysql2/promise\";\n\nimport * as schema from \"./schema/index\";\n\nlet database: MySql2Database<typeof schema>;\nlet connection: Connection;\n\nif (process.env.NODE_ENV === \"production\") {\n  connection = await mysql.createConnection(process.env.DATABASE_URL as string);\n  database = drizzle(connection, { schema, mode: \"default\" });\n} else {\n  if (!(global as any).database) {\n    connection = await mysql.createConnection(\n      process.env.DATABASE_URL as string\n    );\n\n    (global as any).database = drizzle(connection, { schema, mode: \"default\" });\n  }\n  database = (global as any).database;\n}\n\nexport * from \"drizzle-orm/sql\";\nexport { database, connection, schema };\n",
+      "type": "registry:lib"
+    }
+  ],
+  "docs": "To complete the installation:\n\n- Add `DATABASE_URL` variable to your environment file.\n\n- Add the following scripts to your `package.json`:\n\n\"db:push\": \"drizzle-kit push\",\n\"db:studio\": \"drizzle-kit studio\""
+}

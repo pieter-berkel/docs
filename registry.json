@@ -1,0 +1,55 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry.json",
+  "name": "Pieter Berkel's Registry",
+  "homepage": "https://docs.pieterberkel.com",
+  "items": [
+    {
+      "name": "id-generator",
+      "title": "ID Generator",
+      "description": "A simple lowercase alphanumeric ID generator.",
+      "type": "registry:lib",
+      "dependencies": ["nanoid"],
+      "files": [
+        {
+          "path": "registry/new-york/id-generator/lib/id-generator.ts",
+          "type": "registry:lib"
+        }
+      ]
+    },
+    {
+      "name": "drizzle-orm",
+      "title": "Drizzle ORM",
+      "description": "Pieter Berkel's opinionated Drizzle ORM setup for MySQL.",
+      "type": "registry:lib",
+      "dependencies": ["drizzle-orm", "mysql2"],
+      "devDependencies": ["drizzle-kit", "dotenv"],
+      "registryDependencies": [
+        "https://docs.pieterberkel.nl/r/id-generator.json"
+      ],
+      "docs": "To complete the installation:\n\n- Add `DATABASE_URL` variable to your environment file.\n\n- Add the following scripts to your `package.json`:\n\n\"db:push\": \"drizzle-kit push\",\n\"db:studio\": \"drizzle-kit studio\"",
+      "files": [
+        {
+          "path": "registry/new-york/drizzle-orm/drizzle.config.ts",
+          "type": "registry:file",
+          "target": "~/drizzle.config.ts"
+        },
+        {
+          "path": "registry/new-york/drizzle-orm/lib/db/schema/example-items.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/new-york/drizzle-orm/lib/db/schema/index.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/new-york/drizzle-orm/lib/db/helpers.ts",
+          "type": "registry:lib"
+        },
+        {
+          "path": "registry/new-york/drizzle-orm/lib/db/index.ts",
+          "type": "registry:lib"
+        }
+      ]
+    }
+  ]
+}

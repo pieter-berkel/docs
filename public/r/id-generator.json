@@ -1,0 +1,17 @@
+{
+  "$schema": "https://ui.shadcn.com/schema/registry-item.json",
+  "name": "id-generator",
+  "type": "registry:lib",
+  "title": "ID Generator",
+  "description": "A simple lowercase alphanumeric ID generator.",
+  "dependencies": [
+    "nanoid"
+  ],
+  "files": [
+    {
+      "path": "registry/new-york/id-generator/lib/id-generator.ts",
+      "content": "import { customAlphabet } from \"nanoid\";\n\nexport const lowercase = \"abcdefghijklmnopqrstuvwxyz\";\nexport const numbers = \"0123456789\";\n\ninterface GenerateIDOptions {\n  length?: number;\n}\n\nconst generateID = (options: GenerateIDOptions = {}) => {\n  const { length = 16 } = options;\n  return customAlphabet(lowercase + numbers, length)();\n};\n\nexport { generateID };\n",
+      "type": "registry:lib"
+    }
+  ]
+}
