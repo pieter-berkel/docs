@@ -1,0 +1,241 @@
+---
+title: Database (Drizzle ORM)
+description: A comprehensive guide to setting up Drizzle ORM with MySQL in a Next.js project, featuring connection pooling, soft deletes, and best practices.
+---
+
+import { FileTree } from "@astrojs/starlight/components";
+
+Drizzle ORM is a lightweight, TypeScript-native ORM that provides a powerful and type-safe way to interact with your database. This guide walks you through setting up Drizzle ORM with a MySQL database in a Next.js project.
+
+We will cover:
+
+- Installation and configuration.
+- Setting up a pooled database connection.
+- Implementing a robust soft-delete pattern.
+- Defining schemas and helpers for consistency.
+
+For more details, refer to the [official Drizzle ORM documentation](https://orm.drizzle.team/).
+
+## Installation
+
+First, install the necessary dependencies for Drizzle ORM, the MySQL driver, and `nanoid` for unique ID generation.
+
+```bash
+pnpm add drizzle-orm mysql2 nanoid
+pnpm add -D drizzle-kit dotenv
+```
+
+## Project Configuration
+
+Next, configure your project to connect to the database and manage migrations.
+
+### 1. Environment Variables
+
+Create a `.env` file in your project root and add your database connection string.
+
+```dotenv title=".env"
+DATABASE_URL="mysql://user:password@host:port/database"
+```
+
+### 2. Drizzle Configuration
+
+Create a `drizzle.config.ts` file in the root of your project. This file tells Drizzle Kit where to find your database schema and how to connect to your database.
+
+```typescript title="drizzle.config.ts"
+import "dotenv/config";
+import { defineConfig } from "drizzle-kit";
+
+export default defineConfig({
+  out: "./drizzle",
+  schema: "./lib/db/schema/index.ts",
+  dialect: "mysql",
+  dbCredentials: {
+    url: process.env.DATABASE_URL!,
+  },
+});
+```
+
+### 3. Package Scripts
+
+Add scripts to your `package.json` to simplify running Drizzle Kit commands for database migrations and introspection.
+
+```json title="package.json"
+{
+  "scripts": {
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  }
+}
+```
+
+## Core Implementation
+
+Now, let's set up the core files for our database logic.
+
+### 1. Database Connection
+
+Set up the database connection in `lib/db/index.ts`. This implementation uses connection pooling for performance and creates a global instance in development to prevent exhausting database connections during hot-reloading.
+
+```typescript title="lib/db/index.ts"
+import { drizzle, MySql2Database } from "drizzle-orm/mysql2";
+import mysql, { Connection } from "mysql2/promise";
+
+import * as schema from "./schema/index";
+
+let database: MySql2Database<typeof schema>;
+let connection: Connection;
+
+if (process.env.NODE_ENV === "production") {
+  connection = await mysql.createConnection(process.env.DATABASE_URL as string);
+  database = drizzle(connection, { schema, mode: "default" });
+} else {
+  if (!(global as any).database) {
+    connection = await mysql.createConnection(
+      process.env.DATABASE_URL as string
+    );
+
+    (global as any).database = drizzle(connection, { schema, mode: "default" });
+  }
+  database = (global as any).database;
+}
+
+export * from "drizzle-orm/sql";
+export { database, connection, schema };
+```
+
+### 2. ID and Timestamp Helpers
+
+To ensure consistency across your tables, create helper functions for generating primary keys and managing timestamps. This is also where we'll lay the foundation for our soft-delete pattern.
+
+First, create a small utility for `nanoid`.
+
+```typescript title="utils/nanoid.ts"
+import { customAlphabet } from "nanoid";
+
+const alphabet = "0123456789abcdefghijklmnopqrstuvwxyz";
+export const nanoid = customAlphabet(alphabet, 16);
+```
+
+Now, create the database helpers.
+
+```typescript title="lib/db/helpers.ts"
+import { timestamp, varchar } from "drizzle-orm/mysql-core";
+
+import { nanoid } from "@/utils/nanoid";
+
+export const id = varchar("id", { length: 16 })
+  .primaryKey()
+  .$defaultFn(() => nanoid());
+
+export const createdAt = timestamp("created_at").notNull().defaultNow();
+
+export const updatedAt = timestamp("updated_at")
+  .notNull()
+  .defaultNow()
+  .onUpdateNow();
+
+export const deletedAt = timestamp("deleted_at");
+
+export const timestamps = {
+  createdAt,
+  updatedAt,
+  deletedAt,
+};
+```
+
+### 3. Schema Definition
+
+With the helpers in place, you can define your table schemas.
+
+#### Example: `todo_items` Table
+
+Create a file for each table schema. Here's an example for a `todo_items` table.
+
+```typescript title="lib/db/schema/todo-items.ts"
+import { boolean, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+
+import { id, timestamps } from "../helpers";
+
+export const todoItems = mysqlTable("todo_items", {
+  id,
+  title: varchar("title", { length: 255 }).notNull(),
+  isCompleted: boolean("is_completed").notNull().default(false),
+  ...timestamps,
+});
+```
+
+#### Central Schema Export
+
+Create a central `index.ts` file in your schema directory to export all table schemas. This simplifies imports in other parts of your application.
+
+```typescript title="lib/db/schema/index.ts"
+export * from "./todo-items";
+```
+
+### 4. Push Schema to Database
+
+After defining your schemas and setting up the configuration, you need to synchronize your schema with the database. Run the `db:push` script from your `package.json`:
+
+```bash
+pnpm db:push
+```
+
+This command introspects your schema files and applies the necessary changes to your database.
+
+## Final file structure
+
+Here is how the final structure should look:
+
+<FileTree>
+
+- lib
+  - db
+    - index.ts
+    - helpers.ts
+    - schema
+      - index.ts
+      - todo-items.ts
+- utils
+  - nanoid.ts
+
+</FileTree>
+
+## Usage Examples
+
+Here’s how to perform common database operations with the setup.
+
+### Selecting Data (Read)
+
+When querying data, always filter out soft-deleted records by checking where `deletedAt` is `null`.
+
+```typescript
+import { db, schema, isNull } from "@/lib/db";
+
+// Using the Relational Queries API
+const items = await db.query.todoItems.findMany({
+  where: (table, { isNull }) => isNull(table.deletedAt),
+});
+
+// Using the SQL-like Select API
+const items2 = await db
+  .select()
+  .from(schema.todoItems)
+  .where(isNull(schema.todoItems.deletedAt));
+```
+
+### Deleting Data (Soft Delete)
+
+To perform a soft delete, update the `deletedAt` field with the current timestamp instead of permanently deleting the row.
+
+```typescript
+import { db, schema, eq } from "@/lib/db";
+
+async function softDeleteTodoItem(itemId: string) {
+  await db
+    .update(schema.todoItems)
+    .set({ deletedAt: new Date() })
+    .where(eq(schema.todoItems.id, itemId));
+}
+```
+
+This approach preserves data integrity and allows you to recover deleted records if needed.

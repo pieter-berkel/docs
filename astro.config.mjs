@@ -18,6 +18,20 @@ export default defineConfig({
           href: "https://github.com/pieter-berkel/docs",
         },
       ],
+      sidebar: [
+        {
+          label: "Introduction",
+          slug: "",
+        },
+        {
+          label: "Next.js",
+          items: [
+            "nextjs/project-configuration",
+            "nextjs/database",
+            "nextjs/email",
+          ],
+        },
+      ],
       plugins: [
         starlightThemeBlack({
           footerText:

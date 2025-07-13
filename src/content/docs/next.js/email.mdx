@@ -1,0 +1,81 @@
+---
+title: Email
+description: Learn how to send emails using various email service providers.
+---
+
+Sending emails programmatically is a common requirement for many applications. This guide provides an example of how to send emails using an email service provider. While Resend is used in the example, you can replace it with any other provider by modifying the `sendEmail` function.
+
+## Installation
+
+First, install the required package for Resend:
+
+```bash
+pnpm add resend
+```
+
+Next, ensure you update your `env.example` and `.env` files with the `RESEND_API_KEY` variable:
+
+```plaintext
+RESEND_API_KEY=your_api_key_here
+```
+
+## Implementation
+
+You can replace Resend with any other email service provider by modifying the `sendEmail` function. Ensure you follow the API documentation of your chosen provider.
+
+Add the following code to your project:
+
+```typescript title="lib/mail.ts"
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY as string);
+
+interface SendEmailArgs {
+  from: string;
+  replyTo?: string;
+  to: string;
+  cc?: string;
+  bcc?: string;
+  subject: string;
+  text?: string;
+  html?: string;
+  react?: React.ReactNode;
+  headers?: Record<string, string>;
+  tags?: {
+    name: string;
+    value: string;
+  }[];
+  attachments?: {
+    content?: string | Buffer;
+    filename?: string | false | undefined;
+    path?: string;
+    contentType?: string;
+  }[];
+}
+
+export const sendEmail = async (args: SendEmailArgs) => {
+  const { error } = await resend.emails.send({
+    ...args,
+    text: args.text || "",
+  });
+
+  if (error) {
+    throw error;
+  }
+};
+```
+
+## Example Usage
+
+```typescript
+import { sendEmail } from "./lib/mail";
+
+await sendEmail({
+  from: "example@example.com",
+  to: "recipient@example.com",
+  subject: "Hello World",
+  text: "This is a test email.",
+});
+```
+
+This example demonstrates how to send a simple email. You can extend the `sendEmail` function to include additional features like attachments, custom headers, and tags.

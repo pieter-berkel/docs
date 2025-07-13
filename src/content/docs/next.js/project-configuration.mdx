@@ -1,0 +1,124 @@
+---
+title: Project Configuration
+description: How to configure a new Next.js project with TypeScript, ESLint, Tailwind CSS, and more.
+---
+
+When starting a new Next.js project, a solid configuration is key for a smooth development experience. This guide walks you through setting up a project with a standard and opinionated set of tools.
+
+## Initial Project Setup
+
+To create a new Next.js app, run the following command in your terminal:
+
+```bash
+pnpm create next-app@latest
+```
+
+You will be prompted with a series of questions. For this project's configuration, answer them as follows:
+
+- **What is your project named?** › `my-app`
+- **Would you like to use TypeScript?** › **Yes**
+- **Would you like to use ESLint?** › **Yes**
+- **Would you like to use Tailwind CSS?** › **Yes**
+- **Would you like to use `src/` directory?** › **No**
+- **Would you like to use App Router? (recommended)** › **Yes**
+- **Would you like to customize the default import alias (@/\*)?** › **No**
+
+This setup gives you a project with TypeScript, ESLint, Tailwind CSS, the App Router, and the default `@/` import alias, without a `src` directory.
+
+## Tools
+
+### TypeScript
+
+To optimize your Next.js project for modern JavaScript and TypeScript, update your `tsconfig.json` file with the following configuration:
+
+```json title="tsconfig.json"
+{
+  "compilerOptions": {
+    "allowJs": true,
+    "esModuleInterop": true,
+    "incremental": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "module": "esnext",
+    "moduleDetection": "force",
+    "moduleResolution": "bundler",
+    "noEmit": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "target": "es2022",
+    "plugins": [{ "name": "next" }],
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}
+```
+
+This configuration ensures cleaner code, smaller bundle output, and better runtime performance while enforcing stricter TypeScript rules.
+
+### Prettier
+
+[Prettier](https://prettier.io/) is an opinionated code formatter that enforces a consistent style.
+
+1.  Install Prettier as a dev dependency:
+
+    ```bash
+    pnpm add -D prettier
+    ```
+
+2.  Add a `format` script to your `package.json`:
+
+    ```json title="package.json"
+    {
+      "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "start": "next start",
+        "lint": "next lint",
+        "format": "prettier --write ."
+      }
+    }
+    ```
+
+3.  To enable format-on-save in VS Code, create a `.vscode/settings.json` file and add the following:
+    ```json title=".vscode/settings.json"
+    {
+      "editor.formatOnSave": true,
+      "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
+    ```
+    This requires the [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extension to be installed in VS Code.
+
+## Environment Variables
+
+Create a `.env.example` and a `.env` file in the root of your project. The `.env` file should contain your environment variables, while the `.env.example` file should list the variables without values, serving as a template for others to follow.
+
+Your `.env` file is ignored by Git, so you can safely store secrets in it.
+
+```env title=".env.example"
+# Example environment variable
+NEXT_PUBLIC_API_URL=
+```
+
+```env title=".env"
+# Example environment variable
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
+
+## Shadcn UI
+
+[Shadcn UI](https://ui.shadcn.com/) is a collection of re-usable components that you can copy and paste into your apps. It also helps establish a robust design system for your project by altering your stylesheet, TailwindCSS configuration, and setting good default CSS variables.
+
+To get started, run the `init` command:
+
+```bash
+pnpm dlx shadcn-ui@latest init
+```
+
+This will guide you through a few questions to configure `components.json` for your project and set up the design system.

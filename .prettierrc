@@ -1,0 +1,12 @@
+{
+  "overrides": [
+    {
+      "files": "*.mdx",
+      "options": {
+        "parser": "mdx",
+        "proseWrap": "preserve",
+        "htmlWhitespaceSensitivity": "ignore"
+      }
+    }
+  ]
+}
